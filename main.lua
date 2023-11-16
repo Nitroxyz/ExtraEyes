@@ -78,7 +78,7 @@ set_callback(function(render_ctx, hud)
             local p_opacity = hud.data.players[i].opacity;
             local custom_color = Color:new(1, 1, 1, hud.opacity * p_opacity);
             local x = -0.985 + ((i-1)*0.320);
-            local y = 0.920; -- add hud.y later
+            local y = 0.06 + hud.y;
             local b = 0.06;
             local temp_aabb = AABB:new(x, y, x + b, y - (b * (16/9)));
             local temp_quad = Quad:new(temp_aabb);
