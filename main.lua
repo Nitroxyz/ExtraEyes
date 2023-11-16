@@ -30,9 +30,6 @@ local hi_col = {}; --column
 local hi_row = {}; --row
 local hi_rect = {}; --quad
 
---alpha
-local polaroid_activate = false;
-
 --noiZ
 ready = false;
 
@@ -43,16 +40,10 @@ set_callback(function()
     hi_row = {};
     hi_rect = {};
 
-    if state.screen ~= SCREEN.LEVEL or options.debug_killswitch then
+    if state.screen ~= SCREEN.LEVEL then
         --nothing
     else
         if state.loading == 0 and ready then
-            --[[ alpha
-            if polaroid_activate then
-                console_prinspect("new shot")
-
-            end
-            ]]
             for i, tPlayer in ipairs(players) do
                 if tPlayer.holding_uid > -1 then
                     --instanz stuff
@@ -64,12 +55,6 @@ set_callback(function()
                         --source
                         table.insert(hi_col, held_item.animation_frame % text_width)
                         table.insert(hi_row, math.floor(held_item.animation_frame / text_width))
-                        --[[ alpha
-                        if polaroid_activate then
-                            --in order: player slot, holding uid, item uid, item type, item texture, item animation frame, texture width
-                            console_prinspect(tPlayer.inventory.player_slot, tPlayer.holding_uid, held_item.uid, held_item.type.id, held_item:get_texture(), held_item.animation_frame, text_width)
-                        end
-                        ]]
 
                         --destination
                         --[[ delta
@@ -93,15 +78,8 @@ end, ON.POST_UPDATE)
 
 set_callback(function(render_ctx, hud)
 
-    -- alpha
-    if polaroid_activate then
-        --console_prinspect("new shot")
-        message("new shot")
-    end
-
     --0.86 base
     --1.15 up
-
 
     for ii, v in ipairs(hi_text) do
         --shaddow
@@ -112,24 +90,11 @@ set_callback(function(render_ctx, hud)
             render_ctx:draw_screen_texture(v, hi_row[ii], hi_col[ii], shadow, c_black);
         end
         ]]
-        --[[ Debug
-        local r_ab = hi_rect[ii]:get_AABB();
-        if polaroid_activate then
-            -- In order: texture_id, row, column, aabb left, aabb bottom, aabb right, aabb top
-            prinspect(v, hi_row[ii], hi_col[ii], r_ab.left, r_ab.bottom, r_ab.right, r_ab.top);
-        end
-        ]]
         local custom_color = Color:new(1, 1, 1, hud.opacity);
 
         render_ctx:draw_screen_texture(v, hi_row[ii], hi_col[ii], hi_rect[ii], custom_color);
         
     end
-    -- alpha
-    if polaroid_activate then
-        message("shot taken")
-        polaroid_activate = false
-    end
-    
 end, ON.RENDER_POST_HUD)
 
 -- wait 1 second before updating
@@ -138,13 +103,6 @@ set_callback(function ()
         ready = true
     end, 60)
 end, ON.POST_LEVEL_GENERATION)
-
--- alpha
-register_option_button("debug_polariod", "Polaroid", "", function ()
-    polaroid_activate = true
-end)
-
-register_option_bool("debug_killswitch", "killswitch", "", false)
 
 --[[ delta
 register_option_bool("a_custom", "custom position", "Be precise", false)
