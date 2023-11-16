@@ -1,6 +1,6 @@
 meta = {
     name = "ExtraEyes",
-    version = "5.8",
+    version = "6.0",
     author = "Nitroxy",
     description = "Shows held items"
 }
