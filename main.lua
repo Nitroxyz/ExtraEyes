@@ -1,11 +1,11 @@
 meta = {
     name = "ExtraEyes",
-    version = "5.7",
+    version = "5.8",
     author = "Nitroxy",
     description = "Shows held items"
 }
 --Versions after 5.3:
---4
+--5
 --[[ TODO: 
 ADD DISPLAY FOR HIRED HAND
 Put the icon to the right of the ropes pls
