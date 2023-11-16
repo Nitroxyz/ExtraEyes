@@ -47,12 +47,13 @@ set_callback(function()
                     --instanz stuff
                     local held_item = get_entity(tPlayer.holding_uid)
                     if held_item ~= nil then --Apperently THIS IS NECESSARY
+                        local player_slot = tPlayer.inventory.player_slot;
                         local text = held_item:get_texture()
                         local text_width = math.floor(get_texture_definition(text).width / get_texture_definition(text).tile_width)
-                        table.insert(hi_text, text)
+                        hi_text[player_slot] = text;
                         --source
-                        table.insert(hi_col, held_item.animation_frame % text_width)
-                        table.insert(hi_row, math.floor(held_item.animation_frame / text_width))
+                        hi_col[player_slot] = held_item.animation_frame % text_width;
+                        hi_row[player_slot] =  math.floor(held_item.animation_frame / text_width);
 
                         --destination
                         --[[ delta
@@ -62,11 +63,13 @@ set_callback(function()
                             b = options.big
                         else
                         --]]
+                        --[[
                         local x = -0.985 + ((tPlayer.inventory.player_slot-1)*0.320)
                         local y = 0.920
                         local b = 0.06
                         local temp_aabb = AABB:new(x, y, x + b, y - (b * (16/9)));
                         table.insert(hi_rect, Quad:new(temp_aabb));
+                        ]]
                     end
                 end
             end
@@ -79,19 +82,20 @@ set_callback(function(render_ctx, hud)
     --0.86 base
     --1.15 up
 
-    for ii, v in ipairs(hi_text) do
-        --shaddow
-        --[[
-        local shadow = Quad:new(hi_rect[ii]);
-        shadow:offset( -0.003, -0.004);
-        if options.shaddow then
-            render_ctx:draw_screen_texture(v, hi_row[ii], hi_col[ii], shadow, c_black);
-        end
-        ]]
-        local custom_color = Color:new(1, 1, 1, hud.opacity);
+    for i, v in pairs(hud.data.inventory) do
+        if(v.enabled)then
+            local p_opacity = hud.data.players[i].opacity;
+            local custom_color = Color:new(1, 1, 1, hud.opacity * p_opacity);
+            local x = -0.985 + ((i-1)*0.320);
+            local y = 0.920; -- add hud.y later
+            local b = 0.06;
+            local temp_aabb = AABB:new(x, y, x + b, y - (b * (16/9)));
+            local temp_quad = Quad:new(temp_aabb);
 
-        render_ctx:draw_screen_texture(v, hi_row[ii], hi_col[ii], hi_rect[ii], custom_color);
-        
+            if(hi_text[i] ~= nil)then
+            render_ctx:draw_screen_texture(hi_text[i], hi_row[i], hi_col[i], temp_quad, custom_color);
+            end
+        end
     end
 end, ON.RENDER_POST_HUD)
 
