@@ -31,7 +31,7 @@ local hi_row = {}; --row
 local hi_rect = {}; --quad
 
 --noiZ
-ready = false;
+local ready = false;
 
 set_callback(function()
     --empty vars
@@ -40,9 +40,7 @@ set_callback(function()
     hi_row = {};
     hi_rect = {};
 
-    if state.screen ~= SCREEN.LEVEL then
-        --nothing
-    else
+    if state.screen == SCREEN.LEVEL then
         if state.loading == 0 and ready then
             for i, tPlayer in ipairs(players) do
                 if tPlayer.holding_uid > -1 then
