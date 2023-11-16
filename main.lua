@@ -28,7 +28,6 @@ New heart: -0.985, 0.920, 0.06
 local hi_text = {}; --texture
 local hi_col = {}; --column
 local hi_row = {}; --row
-local hi_rect = {}; --quad
 
 --noiZ
 local ready = false;
@@ -38,7 +37,6 @@ set_callback(function()
     hi_text = {};
     hi_col = {};
     hi_row = {};
-    hi_rect = {};
 
     if state.screen == SCREEN.LEVEL then
         if state.loading == 0 and ready then
@@ -63,13 +61,6 @@ set_callback(function()
                             b = options.big
                         else
                         --]]
-                        --[[
-                        local x = -0.985 + ((tPlayer.inventory.player_slot-1)*0.320)
-                        local y = 0.920
-                        local b = 0.06
-                        local temp_aabb = AABB:new(x, y, x + b, y - (b * (16/9)));
-                        table.insert(hi_rect, Quad:new(temp_aabb));
-                        ]]
                     end
                 end
             end
