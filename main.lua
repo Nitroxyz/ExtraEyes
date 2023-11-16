@@ -1,11 +1,11 @@
 meta = {
     name = "ExtraEyes",
-    version = "5.6",
+    version = "5.7",
     author = "Nitroxy",
     description = "Shows held items"
 }
 --Versions after 5.3:
---3
+--4
 --[[ TODO: 
 ADD DISPLAY FOR HIRED HAND
 Put the icon to the right of the ropes pls
@@ -30,7 +30,7 @@ local hi_col = {}; --column
 local hi_row = {}; --row
 
 --noiZ
-local ready = false;
+--local ready = false;
 
 set_callback(function()
     --empty vars
@@ -39,8 +39,8 @@ set_callback(function()
     hi_row = {};
 
     if state.screen == SCREEN.LEVEL then
-        if state.loading == 0 and ready then
-            for i, tPlayer in ipairs(players) do
+        if state.loading == 0 --[[and ready]] then
+            for _, tPlayer in ipairs(players) do
                 if tPlayer.holding_uid > -1 then
                     --instanz stuff
                     local held_item = get_entity(tPlayer.holding_uid)
@@ -84,18 +84,20 @@ set_callback(function(render_ctx, hud)
             local temp_quad = Quad:new(temp_aabb);
 
             if(hi_text[i] ~= nil)then
-            render_ctx:draw_screen_texture(hi_text[i], hi_row[i], hi_col[i], temp_quad, custom_color);
+                render_ctx:draw_screen_texture(hi_text[i], hi_row[i], hi_col[i], temp_quad, custom_color);
             end
         end
     end
 end, ON.RENDER_POST_HUD)
 
 -- wait 1 second before updating
+--[[
 set_callback(function ()
     set_timeout(function ()
         ready = true
     end, 60)
 end, ON.POST_LEVEL_GENERATION)
+]]
 
 --[[ delta
 register_option_bool("a_custom", "custom position", "Be precise", false)
@@ -103,8 +105,6 @@ register_option_float("left", "left", "", -0.985, -1, 1)
 register_option_float("top", "top", "", 0.910, -1, 1)
 register_option_float("big", "big", "", 0.05, 0, 2)
 --]]
-
-register_option_bool("shaddow", "drop shaddow", "", false)
 
 --[[ Credits
     NoiZ for ideas, inspiration and programming
