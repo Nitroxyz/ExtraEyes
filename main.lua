@@ -70,7 +70,12 @@ set_callback(function(render_ctx, hud)
 
     for i,v in pairs(hud.data.inventory) do
         if(v.enabled)then
-            local p_opacity = hud.data.players[i].opacity;
+            local p_opacity;
+            if options.a_old then
+                p_opacity = 1;
+            else
+                p_opacity = hud.data.players[i].opacity;
+            end
             local custom_color = Color:new(1, 1, 1, hud.opacity * p_opacity);
             local x = -0.985 + ((i-1)*0.320);
             local y = 0.06 + hud.y;
@@ -85,6 +90,8 @@ set_callback(function(render_ctx, hud)
     end
 end, ON.RENDER_POST_HUD)
 
+register_option_bool("a_old", "Use old visuals", "Icons don't adjust to player fade", false);
+
 --[[ delta
 register_option_bool("a_custom", "custom position", "Be precise", false)
 register_option_float("left", "left", "", -0.985, -1, 1)
@@ -96,3 +103,6 @@ register_option_float("big", "big", "", 0.05, 0, 2)
     NoiZ for ideas, inspiration and programming
     Deltarune for the name and betatesting
 ]]
+
+--1 -> 1
+--0 -> p_opacity
