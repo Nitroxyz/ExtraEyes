@@ -29,39 +29,34 @@ local hi_text = {}; --texture
 local hi_col = {}; --column
 local hi_row = {}; --row
 
---noiZ
---local ready = false;
-
 set_callback(function()
-    --empty vars
+    --empty vars (Always, so when not ingame, it will not draw)
     hi_text = {};
     hi_col = {};
     hi_row = {};
 
-    if state.screen == SCREEN.LEVEL then
-        if state.loading == 0 --[[and ready]] then
-            for _, tPlayer in ipairs(players) do
-                if tPlayer.holding_uid > -1 then
-                    --instanz stuff
-                    local held_item = get_entity(tPlayer.holding_uid)
-                    if held_item ~= nil then --Apperently THIS IS NECESSARY
-                        local player_slot = tPlayer.inventory.player_slot;
-                        local text = held_item:get_texture()
-                        local text_width = math.floor(get_texture_definition(text).width / get_texture_definition(text).tile_width)
-                        hi_text[player_slot] = text;
-                        --source
-                        hi_col[player_slot] = held_item.animation_frame % text_width;
-                        hi_row[player_slot] =  math.floor(held_item.animation_frame / text_width);
+    if state.screen == SCREEN.LEVEL and state.loading == 0 then
+        for _,tPlayer in ipairs(players) do
+            if tPlayer.holding_uid > -1 then
+                --instanz stuff
+                local held_item = get_entity(tPlayer.holding_uid)
+                if held_item ~= nil then --Apperently THIS IS NECESSARY
+                    local player_slot = tPlayer.inventory.player_slot;
+                    local text = held_item:get_texture()
+                    local text_width = math.floor(get_texture_definition(text).width / get_texture_definition(text).tile_width)
+                    hi_text[player_slot] = text;
+                    --source
+                    hi_col[player_slot] = held_item.animation_frame % text_width;
+                    hi_row[player_slot] =  math.floor(held_item.animation_frame / text_width);
 
-                        --destination
-                        --[[ delta
-                        if options.a_custom then
-                            x = options.left + ((tPlayer.inventory.player_slot-1)*0.320)
-                            y = options.top
-                            b = options.big
-                        else
-                        --]]
-                    end
+                    --destination
+                    --[[ delta
+                    if options.a_custom then
+                        x = options.left + ((tPlayer.inventory.player_slot-1)*0.320)
+                        y = options.top
+                        b = options.big
+                    else
+                    --]]
                 end
             end
         end
@@ -73,7 +68,7 @@ set_callback(function(render_ctx, hud)
     --0.86 base
     --1.15 up
 
-    for i, v in pairs(hud.data.inventory) do
+    for i,v in pairs(hud.data.inventory) do
         if(v.enabled)then
             local p_opacity = hud.data.players[i].opacity;
             local custom_color = Color:new(1, 1, 1, hud.opacity * p_opacity);
@@ -83,21 +78,12 @@ set_callback(function(render_ctx, hud)
             local temp_aabb = AABB:new(x, y, x + b, y - (b * (16/9)));
             local temp_quad = Quad:new(temp_aabb);
 
-            if(hi_text[i] ~= nil)then
+            if hi_text[i] ~= nil then
                 render_ctx:draw_screen_texture(hi_text[i], hi_row[i], hi_col[i], temp_quad, custom_color);
             end
         end
     end
 end, ON.RENDER_POST_HUD)
-
--- wait 1 second before updating
---[[
-set_callback(function ()
-    set_timeout(function ()
-        ready = true
-    end, 60)
-end, ON.POST_LEVEL_GENERATION)
-]]
 
 --[[ delta
 register_option_bool("a_custom", "custom position", "Be precise", false)
