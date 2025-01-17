@@ -1,6 +1,6 @@
 meta = {
     name = "ExtraEyes",
-    version = "1.8.2",
+    version = "1.8.3",
     author = "Nitroxy",
     description = "Shows held items",
     online_safe = true
@@ -24,12 +24,12 @@ New heart: -0.985, 0.920, 0.06
 --]]
 
 local backitem = {}
-backitem[ENT_TYPE.ITEM_JETPACK] = {columns = 10, rows = 2}
-backitem[ENT_TYPE.ITEM_CAPE] = {columns = 4, rows = 7}
-backitem[ENT_TYPE.ITEM_VLADS_CAPE] = {columns = 4, rows = 6}
-backitem[ENT_TYPE.ITEM_HOVERPACK] = {columns = 5, rows = 9}
+backitem[ENT_TYPE.ITEM_JETPACK]             = {columns = 10, rows = 2}
+backitem[ENT_TYPE.ITEM_CAPE]                = {columns = 4, rows = 7}
+backitem[ENT_TYPE.ITEM_VLADS_CAPE]          = {columns = 4, rows = 6}
+backitem[ENT_TYPE.ITEM_HOVERPACK]           = {columns = 5, rows = 9}
 backitem[ENT_TYPE.ITEM_TELEPORTER_BACKPACK] = {columns = 8, rows = 4}
-backitem[ENT_TYPE.ITEM_POWERPACK] = {columns = 8, rows = 11}
+backitem[ENT_TYPE.ITEM_POWERPACK]           = {columns = 8, rows = 11}
 
 --Define vars
 local textures = {}
@@ -45,6 +45,7 @@ local player_backitem = {}
 
 --backitem[ENT_TYPE.ITEM_JETPACK_MECH] = ???
 
+-- Find the backitem of the player
 set_callback(function()
     --clear tables (If not in-game, it will not draw)
     textures = {}
@@ -54,13 +55,15 @@ set_callback(function()
 
     local new_state = get_local_state() --[[@as StateMemory]]
 
+    --[[
     if new_state.screen ~= state.screen then
         --print("Screen mix")
     end 
     if new_state.loading ~= state.loading then
         --print("Loading mix")
     end 
-    if state.screen ~= SCREEN.LEVEL or state.loading == 0 then
+    ]]
+    if new_state.screen ~= SCREEN.LEVEL or new_state.loading == 0 then
         for slot = 1, 4 do
             local player = get_player(slot, false)
             if player then
@@ -78,7 +81,7 @@ set_callback(function()
                     rows[slot] =  math.floor(held_item.animation_frame / texture_width);
 
                     local redner = held_item.rendering_info
-                    sources[slot] = redner.source
+                    --sources[slot] = redner.source
 
                     if redner.render_inactive then
                         -- Occurs when outside of visible screen
