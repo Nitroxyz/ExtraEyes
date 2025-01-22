@@ -167,10 +167,9 @@ set_callback(function (render_ctx, hud)
                 kapala_offset = 0.016
             end
             local custom_color = Color:new(1, 1, 1, hud.opacity * player_opacity);
-            local x = -0.977 + ((slot-1)*0.320) + kapala_offset;
+            local x = -0.978 + ((slot-1)*0.320) + kapala_offset;
             local y = 0.120 + hud.y;
             local b = 0.1;
-        
             local temp_aabb = AABB:new(x, y, x + b, y - (b * (16/9)));
             --temp_aabb = get_hud_position(slot)
             local temp_quad = Quad:new(temp_aabb);
@@ -190,7 +189,7 @@ register_option_float("d_just", "SEEEE", "", 0.320, 0, 0)
 register_option_float("e_left", "left", "", -0.977, -1, 1)
 ]]
 --[[
-register_option_float("d_left", "left", "", -0.977, -1, 1)
+register_option_float("d_left", "left", "", -0.9775, -1, 1)
 register_option_float("e_top", "top", "", 0.120, -1, 1)
 register_option_float("f_big", "big", "", 0.1, 0, 2)
 ]]
