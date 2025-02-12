@@ -1,16 +1,16 @@
 meta = {
     name = "ExtraEyes",
-    version = "1.10.0",
+    version = "1.11",
     author = "Nitroxy",
     description = "Shows held items",
     online_safe = true
 }
 --Versions after 5.3:
---11
+--13
 
 --[[ New:
-Warns you if you don't have the correct hud size
-arrows in crossbows are now also displayed
+Birdies
+Debugging (Hidden)
 ]]
 
 --[[ TODO: 
@@ -28,6 +28,44 @@ On heart: -0.985, 0.910, 0.05
 New heart: -0.985, 0.920, 0.06
 --]]
 
+local debug = require("debug_pack.lua")
+debug.active = false
+
+
+local Drawable = {
+    textures = {},
+    columns = {},
+    rows = {},
+}
+function Drawable:new(o)
+    o = o or {
+        textures = -1,
+        columns = -1,
+        rows = -1,
+    }   -- create object if user does not provide one
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
+function Drawable:set(texture, animation_frame)
+    local texture_width = math.floor(get_texture_definition(texture).width / get_texture_definition(texture).tile_width)
+    self.textures = texture;
+    self.columns = animation_frame % texture_width;
+    self.rows =  math.floor(animation_frame / texture_width);
+end
+function Drawable:new_set(texture, animation_frame)
+    local temp = Drawable:new()
+    temp:set(texture, animation_frame)
+    return temp
+end
+function Drawable:new_set_ent(ent)
+    local temp = Drawable:new_set(ent:get_texture(), ent.animation_frame)
+    debug.print_if(math.abs(ent.width-1.25) > 0.001, "Oh what tha hell bruv w")
+    debug.print_if(math.abs(ent.height-1.25) > 0.001, "Oh what tha hell bruv h")
+    return temp
+end
+
+
 local backitem = {}
 backitem[ENT_TYPE.ITEM_JETPACK]             = {columns = 10, rows = 2}
 backitem[ENT_TYPE.ITEM_CAPE]                = {columns = 4, rows = 7}
@@ -37,19 +75,13 @@ backitem[ENT_TYPE.ITEM_TELEPORTER_BACKPACK] = {columns = 8, rows = 4}
 backitem[ENT_TYPE.ITEM_POWERPACK]           = {columns = 8, rows = 11}
 
 --Define vars
-local textures = {}
-local columns = {}
-local rows = {}
--- Special case: Use the slot to find it, gives the texture id of the arrow when present
-local arrows = {
-    textures = {},
-    columns = {},
-    rows = {},
-}
+-- sorted by slot, holds the Drawable classes
+local holding = {}
+local arrows = {}
+local birdies = {}
 
 -- All use the same
 local backitem_texture = 373
-
 local player_backitem = {}
 
 --backitem[ENT_TYPE.ITEM_JETPACK_MECH] = ???
@@ -62,14 +94,10 @@ end
 -- Find the backitem of the player
 set_callback(function()
     --clear tables (If not in-game, it will not draw)
-    textures = {}
-    columns = {}
-    rows = {}
-    arrows = {
-        textures = {},
-        columns = {},
-        rows = {},
-    }
+
+    holding = {}
+    arrows = {}
+    birdies = {}
     player_backitem = {}
 
     local new_state = get_local_state() --[[@as StateMemory]]
@@ -78,28 +106,11 @@ set_callback(function()
         for slot = 1, 4 do
             local player = get_player(slot, false)
             if player then
-                --local held_item = get_entity(player.holding_uid)
                 local held_item = player:get_held_entity()
                 if held_item then
-                    local texture = held_item:get_texture()
-                    --if not texture then
-                        --print("THIS NEEDS TO BE INVESTIGATED")
-                        --prinspect(held_item.type.id)
-                    --end
-                    local texture_width = math.floor(get_texture_definition(texture).width / get_texture_definition(texture).tile_width)
-                    textures[slot] = texture;
-                    columns[slot] = held_item.animation_frame % texture_width;
-                    rows[slot] =  math.floor(held_item.animation_frame / texture_width);
-                    
-                    --[[
-                    local redner = held_item.rendering_info
-                    --sources[slot] = redner.source
+                    holding[slot] = Drawable:new_set_ent(held_item)
 
-                    if redner.render_inactive then
-                        -- Occurs when outside of visible screen
-                        --print("NO RENDER!!!")
-                    end
-                    
+                    --[[
                     if redner.texture_num > 1 then
                         --print("Texture num is higher!")
                         --prinspect(redner.texture_num)
@@ -109,29 +120,36 @@ set_callback(function()
                     -- Arrows
                     local arrow = held_item:get_held_entity()
                     if arrow then
-                        -- Check if its a crossbow
+                        -- Check if held item is a crossbow
                         if held_item.type.id == ENT_TYPE.ITEM_CROSSBOW or held_item.type.id == ENT_TYPE.ITEM_HOUYIBOW then
                             -- Check if its an arrow
                             local type = arrow.type.id
                             if type == ENT_TYPE.ITEM_WOODEN_ARROW or type == ENT_TYPE.ITEM_METAL_ARROW or type == ENT_TYPE.ITEM_LIGHT_ARROW then
-                                local a_texture = arrow:get_texture()
-                                --if not texture then
-                                    --print("THIS NEEDS TO BE INVESTIGATED")
-                                    --prinspect(held_item.type.id)
-                                --end
-                                local a_texture_width = math.floor(get_texture_definition(a_texture).width / get_texture_definition(a_texture).tile_width)
-                                arrows.textures[slot] = a_texture;
-                                arrows.columns[slot] = arrow.animation_frame % a_texture_width;
-                                arrows.rows[slot] =  math.floor(arrow.animation_frame / a_texture_width);
+                                arrows[slot] = Drawable:new_set_ent(arrow)
+                            end
+                        end
+
+                        
+                    end
+
+                    -- Birdies
+                    local items = held_item:get_items()
+                    if items then
+                        for key, value in pairs(items) do
+                            local bird = get_entity(value)
+                            if bird.type.id == ENT_TYPE.FX_BIRDIES then
+                                birdies[slot] = Drawable:new_set_ent(bird)
                             end
                         end
                     end
+                    debug.print_if(not items, "guh")
                 end
 
                 -- Back items!!!
                 local backi = player:worn_backitem()
                 if backi ~= -1 then
                     player_backitem[slot] = backitem[get_entity_type(backi)]
+                    debug.print_if(get_entity_type(backi) == ENT_TYPE.ITEM_JETPACK_MECH, "HOOOW")
                 end
             end
         end
@@ -146,12 +164,8 @@ set_callback(function(render_ctx, hud)
     --1.15 up
 
     for slot, value in pairs(hud.data.inventory) do
-        if(value.enabled)then
-            --if hud.opacity ~= hud.data.opacity then
-                --print("There is an issue with my ai")
-                --prinspect(hud.opacity)
-                --prinspect(hud.data.opacity)
-            --end
+        if value.enabled then
+            debug.print_if(hud.opacity ~= hud.data.opacity, "There is an issue with my ai: " .. hud.opacity .. " " .. hud.data.opacity)
             local player_opacity;
             if options.a_old then
                 player_opacity = 1;
@@ -170,12 +184,19 @@ set_callback(function(render_ctx, hud)
             local temp_quad2 = Quad:new(temp_aabb2);
             ]]
 
-            if textures[slot] then
-                render_ctx:draw_screen_texture(textures[slot], rows[slot], columns[slot], temp_quad, custom_color);
+            if holding[slot] then
+                local hold = holding[slot]
+                render_ctx:draw_screen_texture(hold.textures, hold.rows, hold.columns, temp_quad, custom_color);
                 --render_ctx:draw_screen_texture(textures[slot], sources[slot], temp_quad2, custom_color);
             end
-            if arrows.textures[slot] then
-                render_ctx:draw_screen_texture(arrows.textures[slot], arrows.rows[slot], arrows.columns[slot], temp_quad, custom_color);
+            if arrows[slot] then
+                local arrow = arrows[slot]
+                render_ctx:draw_screen_texture(arrow.textures, arrow.rows, arrow.columns, temp_quad, custom_color);
+            end
+            if birdies[slot] then
+                local bird = birdies[slot]
+                temp_quad:offset(0, b * (16/9) * 0.4 / 1.25)
+                render_ctx:draw_screen_texture(bird.textures, bird.rows, bird.columns, temp_quad, custom_color);
             end
         end
     end
@@ -234,6 +255,3 @@ register_option_float("f_big", "big", "", 0.1, 0, 2)
     NoiZ for ideas, inspiration and programming
     Deltarune for the name and betatesting
 ]]
-
---1 -> 1
---0 -> p_opacity
