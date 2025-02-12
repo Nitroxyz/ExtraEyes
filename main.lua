@@ -1,17 +1,22 @@
 meta = {
     name = "ExtraEyes",
-    version = "1.9.0",
+    version = "1.10.0",
     author = "Nitroxy",
     description = "Shows held items",
     online_safe = true
 }
 --Versions after 5.3:
---9
+--11
+
+--[[ New:
+Warns you if you don't have the correct hud size
+arrows in crossbows are now also displayed
+]]
+
 --[[ TODO: 
 ADD DISPLAY FOR HIRED HAND
 Put the icon to the right of the ropes pls
 Add fade to pauses and other occasions
-Make the hud transparent
 Mount display
 ]]
 
@@ -35,6 +40,12 @@ backitem[ENT_TYPE.ITEM_POWERPACK]           = {columns = 8, rows = 11}
 local textures = {}
 local columns = {}
 local rows = {}
+-- Special case: Use the slot to find it, gives the texture id of the arrow when present
+local arrows = {
+    textures = {},
+    columns = {},
+    rows = {},
+}
 
 -- All use the same
 local backitem_texture = 373
@@ -43,12 +54,22 @@ local player_backitem = {}
 
 --backitem[ENT_TYPE.ITEM_JETPACK_MECH] = ???
 
+local hud_size = get_setting(SAFE_SETTING.HUD_SIZE)
+if hud_size ~= 0 then
+    print('Your hud size needs to be "small" for the mod to work!')
+end
+
 -- Find the backitem of the player
 set_callback(function()
     --clear tables (If not in-game, it will not draw)
     textures = {}
     columns = {}
     rows = {}
+    arrows = {
+        textures = {},
+        columns = {},
+        rows = {},
+    }
     player_backitem = {}
 
     local new_state = get_local_state() --[[@as StateMemory]]
@@ -84,6 +105,27 @@ set_callback(function()
                         --prinspect(redner.texture_num)
                     end
                     ]]
+                    
+                    -- Arrows
+                    local arrow = held_item:get_held_entity()
+                    if arrow then
+                        -- Check if its a crossbow
+                        if held_item.type.id == ENT_TYPE.ITEM_CROSSBOW or held_item.type.id == ENT_TYPE.ITEM_HOUYIBOW then
+                            -- Check if its an arrow
+                            local type = arrow.type.id
+                            if type == ENT_TYPE.ITEM_WOODEN_ARROW or type == ENT_TYPE.ITEM_METAL_ARROW or type == ENT_TYPE.ITEM_LIGHT_ARROW then
+                                local a_texture = arrow:get_texture()
+                                --if not texture then
+                                    --print("THIS NEEDS TO BE INVESTIGATED")
+                                    --prinspect(held_item.type.id)
+                                --end
+                                local a_texture_width = math.floor(get_texture_definition(a_texture).width / get_texture_definition(a_texture).tile_width)
+                                arrows.textures[slot] = a_texture;
+                                arrows.columns[slot] = arrow.animation_frame % a_texture_width;
+                                arrows.rows[slot] =  math.floor(arrow.animation_frame / a_texture_width);
+                            end
+                        end
+                    end
                 end
 
                 -- Back items!!!
@@ -105,11 +147,11 @@ set_callback(function(render_ctx, hud)
 
     for slot, value in pairs(hud.data.inventory) do
         if(value.enabled)then
-            if hud.opacity ~= hud.data.opacity then
+            --if hud.opacity ~= hud.data.opacity then
                 --print("There is an issue with my ai")
                 --prinspect(hud.opacity)
                 --prinspect(hud.data.opacity)
-            end
+            --end
             local player_opacity;
             if options.a_old then
                 player_opacity = 1;
@@ -131,6 +173,9 @@ set_callback(function(render_ctx, hud)
             if textures[slot] then
                 render_ctx:draw_screen_texture(textures[slot], rows[slot], columns[slot], temp_quad, custom_color);
                 --render_ctx:draw_screen_texture(textures[slot], sources[slot], temp_quad2, custom_color);
+            end
+            if arrows.textures[slot] then
+                render_ctx:draw_screen_texture(arrows.textures[slot], arrows.rows[slot], arrows.columns[slot], temp_quad, custom_color);
             end
         end
     end
