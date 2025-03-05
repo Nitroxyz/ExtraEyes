@@ -6,10 +6,12 @@ meta = {
     online_safe = true
 }
 --Versions after 5.3:
---13
+--14
 
 --[[ New:
 Birdies
+Recruits (Hidden) 
+Class based system full rework lel (internal)
 Debugging (Hidden)
 ]]
 
@@ -32,40 +34,6 @@ local debug = require("debug_pack.lua")
 debug.active = false
 
 
-local Drawable = {
-    textures = {},
-    columns = {},
-    rows = {},
-}
-function Drawable:new(o)
-    o = o or {
-        textures = -1,
-        columns = -1,
-        rows = -1,
-    }   -- create object if user does not provide one
-    setmetatable(o, self)
-    self.__index = self
-    return o
-end
-function Drawable:set(texture, animation_frame)
-    local texture_width = math.floor(get_texture_definition(texture).width / get_texture_definition(texture).tile_width)
-    self.textures = texture;
-    self.columns = animation_frame % texture_width;
-    self.rows =  math.floor(animation_frame / texture_width);
-end
-function Drawable:new_set(texture, animation_frame)
-    local temp = Drawable:new()
-    temp:set(texture, animation_frame)
-    return temp
-end
-function Drawable:new_set_ent(ent)
-    local temp = Drawable:new_set(ent:get_texture(), ent.animation_frame)
-    debug.print_if(math.abs(ent.width-1.25) > 0.001, "Oh what tha hell bruv w")
-    debug.print_if(math.abs(ent.height-1.25) > 0.001, "Oh what tha hell bruv h")
-    return temp
-end
-
-
 local backitem = {}
 backitem[ENT_TYPE.ITEM_JETPACK]             = {columns = 10, rows = 2}
 backitem[ENT_TYPE.ITEM_CAPE]                = {columns = 4, rows = 7}
@@ -82,13 +50,31 @@ local birdies = {}
 
 -- All use the same
 local backitem_texture = 373
-local player_backitem = {}
+local backitems = {}
 
 --backitem[ENT_TYPE.ITEM_JETPACK_MECH] = ???
 
 local hud_size = get_setting(SAFE_SETTING.HUD_SIZE)
 if hud_size ~= 0 then
     print('Your hud size needs to be "small" for the mod to work!')
+end
+
+local function set_draw(ent)
+    --local temp = Drawable:new()
+    local temp = {}
+    local texture = ent:get_texture()
+    local texture_width = math.floor(get_texture_definition(texture).width / get_texture_definition(texture).tile_width)
+    temp.textures = texture;
+    temp.columns = ent.animation_frame % texture_width;
+    temp.rows =  math.floor(ent.animation_frame / texture_width);
+    debug.print_if(math.abs(ent.width-1.25) > 0.001, "Oh what tha hell bruv w")
+    debug.print_if(math.abs(ent.height-1.25) > 0.001, "Oh what tha hell bruv h")
+    if (ent.width-ent.height) > 0.0001 then
+        if debug.active then
+            print("GUUUUUH")
+        end
+    end
+    return temp
 end
 
 -- Find the backitem of the player
@@ -98,7 +84,7 @@ set_callback(function()
     holding = {}
     arrows = {}
     birdies = {}
-    player_backitem = {}
+    backitems = {}
 
     local new_state = get_local_state() --[[@as StateMemory]]
 
@@ -108,14 +94,14 @@ set_callback(function()
             if player then
                 local held_item = player:get_held_entity()
                 if held_item then
-                    holding[slot] = Drawable:new_set_ent(held_item)
+                    holding[slot] = set_draw(held_item)
 
-                    --[[
-                    if redner.texture_num > 1 then
-                        --print("Texture num is higher!")
-                        --prinspect(redner.texture_num)
+                    if held_item.rendering_info.texture_num > 1 then
+                        if debug.active then
+                            print("Texture num is higher!")
+                            prinspect(held_item.rendering_info.texture_num)
+                        end
                     end
-                    ]]
                     
                     -- Arrows
                     local arrow = held_item:get_held_entity()
@@ -125,7 +111,7 @@ set_callback(function()
                             -- Check if its an arrow
                             local type = arrow.type.id
                             if type == ENT_TYPE.ITEM_WOODEN_ARROW or type == ENT_TYPE.ITEM_METAL_ARROW or type == ENT_TYPE.ITEM_LIGHT_ARROW then
-                                arrows[slot] = Drawable:new_set_ent(arrow)
+                                arrows[slot] = set_draw(arrow)
                             end
                         end
 
@@ -138,7 +124,7 @@ set_callback(function()
                         for key, value in pairs(items) do
                             local bird = get_entity(value)
                             if bird.type.id == ENT_TYPE.FX_BIRDIES then
-                                birdies[slot] = Drawable:new_set_ent(bird)
+                                birdies[slot] = set_draw(bird)
                             end
                         end
                     end
@@ -148,12 +134,19 @@ set_callback(function()
                 -- Back items!!!
                 local backi = player:worn_backitem()
                 if backi ~= -1 then
-                    player_backitem[slot] = backitem[get_entity_type(backi)]
+                    backitems[slot] = backitem[get_entity_type(backi)]
                     debug.print_if(get_entity_type(backi) == ENT_TYPE.ITEM_JETPACK_MECH, "HOOOW")
                 end
             end
         end
     end
+    local bf
+    if options.before then
+        bf = "After"
+    else
+        bf = "Before"
+    end
+    debug.q.draw(0, bf)
 end, ON.POST_GAME_LOOP)
 
 set_callback(function(render_ctx, hud)
@@ -193,13 +186,15 @@ set_callback(function(render_ctx, hud)
                 local arrow = arrows[slot]
                 render_ctx:draw_screen_texture(arrow.textures, arrow.rows, arrow.columns, temp_quad, custom_color);
             end
-            if birdies[slot] then
+            if birdies[slot] and options.before then
                 local bird = birdies[slot]
                 temp_quad:offset(0, b * (16/9) * 0.4 / 1.25)
                 render_ctx:draw_screen_texture(bird.textures, bird.rows, bird.columns, temp_quad, custom_color);
+                temp_quad:offset(0, -b * (16/9) * 0.4 / 1.25)
             end
         end
     end
+
 end, ON.RENDER_POST_HUD)
 
 set_callback(function (render_ctx, hud)
@@ -225,14 +220,20 @@ set_callback(function (render_ctx, hud)
             local temp_aabb = AABB:new(x, y, x + b, y - (b * (16/9)));
             local temp_quad = Quad:new(temp_aabb);
 
-            if player_backitem[slot] then
-                render_ctx:draw_screen_texture(backitem_texture, player_backitem[slot].rows, player_backitem[slot].columns, temp_quad, custom_color)
+            if backitems[slot] then
+                render_ctx:draw_screen_texture(backitem_texture, backitems[slot].rows, backitems[slot].columns, temp_quad, custom_color)
             end
         end
     end
 end, ON.RENDER_PRE_HUD)
 
 register_option_bool("a_old", "Use old visuals", "Icons don't adjust to player fade", false);
+register_option_bool("before", "Before/After", "", false)
+--[[register_option_callback("b_recruit", false, function (draw_ctx)
+    options.b_recruit = draw_ctx:win_check("Recruit", options.b_recruit)
+    debug.active = options.b_recruit
+    draw_ctx:win_text("Activates a bunch of debugging stuff helpful to find unknown issues")
+end)]]
 --[[ delta
 register_option_bool("c_custom", "custom position", "Be precise", true)
 register_option_float("d_just", "SEEEE", "", 0.320, 0, 0)
